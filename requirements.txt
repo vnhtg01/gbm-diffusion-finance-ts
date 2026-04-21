@@ -1,0 +1,10 @@
+numpy>=1.24
+pandas>=2.0
+scipy>=1.11
+torch>=2.2
+einops>=0.7
+yfinance>=0.2.40
+pyyaml>=6.0
+matplotlib>=3.7
+tqdm>=4.66
+powerlaw>=1.5

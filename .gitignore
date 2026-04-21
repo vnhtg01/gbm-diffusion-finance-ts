@@ -1,0 +1,92 @@
+# =========================================================
+# Python
+# =========================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Notebooks
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Variables d'environnement / secrets
+.env
+.env.local
+*.key
+*.pem
+
+# =========================================================
+# Donn\u00e9es & artefacts d'entra\u00eenement (lourds, non versionn\u00e9s)
+# =========================================================
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+experiments/checkpoints/*
+!experiments/checkpoints/.gitkeep
+
+results/*.npy
+results/*.npz
+results/figures/*
+!results/figures/.gitkeep
+
+# Poids, checkpoints, tenseurs
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.npz
+*.parquet
+*.feather
+*.h5
+*.hdf5
+
+# =========================================================
+# Documents (PDF du papier, rapports, slides compil\u00e9s)
+# =========================================================
+*.pdf
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+
+# =========================================================
+# Documentation vietnamienne (versions internes, non publi\u00e9es)
+# =========================================================
+readme_vi.md
+reproduction_vi.md
+*_vi.md
+
+# =========================================================
+# IDE / OS
+# =========================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

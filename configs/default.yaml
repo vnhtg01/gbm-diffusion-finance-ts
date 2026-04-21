@@ -1,0 +1,42 @@
+# Default hyperparameters (paper Kim, Choi, Kim 2025, §4)
+
+data:
+  universe: sp500           # sp500 | crypto | fx | commodities
+  tickers: null             # override list if not using universe
+  min_years: 40             # only stocks with >=40y history
+  seq_len: 2048             # L
+  stride: 400
+
+sde:
+  type: gbm                 # ve | vp | gbm | cev
+  cev_gamma: 1.0            # only used when type=cev; paper GBM ≡ gamma=1
+  schedule: cosine          # linear | exponential | cosine
+  sigma_min: 0.01
+  sigma_max: 1.0
+  T: 1.0
+  N_reverse: 2000
+
+model:
+  channels: 128             # conv channels
+  diffusion_emb_dim: 256
+  feature_emb_dim: 64
+  n_heads: 8
+  n_layers: 4               # n residual blocks
+  dropout: 0.0
+
+train:
+  batch_size: 64
+  epochs: 1000
+  lr: 1.0e-4
+  weight_decay: 0.0
+  grad_clip: 1.0
+  num_workers: 4
+  device: cuda              # cuda | cpu
+  ckpt_dir: experiments/checkpoints
+  log_every: 50
+
+eval:
+  n_samples: 120
+  tail_fraction: 0.05       # top 5% tail for α estimation
+  max_lag_vc: 1000          # volatility clustering lag range
+  max_lag_lev: 100          # leverage effect lag range

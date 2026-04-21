@@ -1,0 +1,67 @@
+# CPU-scaled config for i5 laptop (no GPU).
+# Paper numbers preserved qualitatively but scale shrunk ~10x.
+# In the report: acknowledge this scale-down, report RELATIVE comparisons
+# (GBM vs VE, schedule effect) — not absolute α values.
+
+data:
+  universe: sp500
+  # 20 oldest large-caps with ≥40y of yfinance history.
+  # Keeps dataset small (~2500 windows) and downloads fast.
+  tickers:
+    - IBM
+    - KO
+    - PG
+    - XOM
+    - GE
+    - MCD
+    - MMM
+    - JNJ
+    - MRK
+    - PFE
+    - CAT
+    - DIS
+    - WMT
+    - BA
+    - CVX
+    - HON
+    - T
+    - F
+    - HD
+    - DD
+  min_years: 30              # softer than paper's 40 to keep all 20 tickers
+  seq_len: 256               # paper: 2048 → /8
+  stride: 64                 # paper: 400 → same ratio
+
+sde:
+  type: gbm
+  cev_gamma: 1.0
+  schedule: cosine
+  sigma_min: 0.01
+  sigma_max: 1.0
+  T: 1.0
+  N_reverse: 500             # paper: 2000 → /4 (shorter sampling chain for CPU)
+
+model:
+  channels: 64               # paper: 128 → /2
+  diffusion_emb_dim: 128     # paper: 256 → /2
+  feature_emb_dim: 32        # paper: 64 → /2
+  n_heads: 4                 # paper: 8 → /2 (C/n_heads = 16)
+  n_layers: 2                # paper: 4 → /2
+  dropout: 0.0
+
+train:
+  batch_size: 32             # paper: 64 → /2
+  epochs: 300                # paper: 1000 → /3
+  lr: 1.0e-4
+  weight_decay: 0.0
+  grad_clip: 1.0
+  num_workers: 2
+  device: cpu
+  ckpt_dir: experiments/checkpoints
+  log_every: 100
+
+eval:
+  n_samples: 120             # matches paper
+  tail_fraction: 0.05
+  max_lag_vc: 128            # ≤ seq_len/2
+  max_lag_lev: 64            # ≤ seq_len/4

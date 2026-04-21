@@ -1,0 +1,43 @@
+# LOCKED to paper Kim, Choi, Kim (2025) §4 for reproduction (Phase 1).
+# Do NOT edit for the reproduction phase. Use configs/default.yaml for extensions.
+
+data:
+  universe: sp500
+  tickers: null
+  min_years: 40               # paper §3.1.2: "more than 40 years back"
+  seq_len: 2048               # paper: "fixed length of 2048 time steps"
+  stride: 400                 # paper: "stride of 400 time steps"
+
+sde:
+  type: gbm                   # default to GBM (the contribution); override for ablation
+  cev_gamma: 1.0              # GBM == CEV with γ=1; unused when type != cev
+  schedule: cosine            # cosine is one of the best per paper §4.2
+  sigma_min: 0.01             # paper §4: σ_min = 0.01
+  sigma_max: 1.0              # paper §4: σ_max = 1.0
+  T: 1.0                      # paper: forward time horizon T = 1
+  N_reverse: 2000             # paper: "discretize the reverse diffusion process into N = 2000"
+
+model:
+  channels: 128               # paper §3.1.1: "128 convolutional channels"
+  diffusion_emb_dim: 256      # paper: "256-dimensional diffusion embedding"
+  feature_emb_dim: 64         # paper: "64-dimensional feature embedding" (best config)
+  n_heads: 8
+  n_layers: 4                 # paper §3.1.1: "gated residual blocks (n = 4)"
+  dropout: 0.0
+
+train:
+  batch_size: 64              # paper §4: "minibatch size of 64"
+  epochs: 1000                # paper §4: "train the score network for 1,000 epochs"
+  lr: 1.0e-4
+  weight_decay: 0.0
+  grad_clip: 1.0
+  num_workers: 4
+  device: cuda
+  ckpt_dir: experiments/checkpoints
+  log_every: 50
+
+eval:
+  n_samples: 120              # paper §4: "generate 120 synthetic time series"
+  tail_fraction: 0.05
+  max_lag_vc: 1000
+  max_lag_lev: 100
