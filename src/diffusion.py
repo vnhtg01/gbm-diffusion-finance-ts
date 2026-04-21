@@ -48,7 +48,8 @@ def train(model: nn.Module, sde: SDE, loader: DataLoader, *, lr: float,
     model.to(device).train()
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     state = TrainState()
-    for epoch in range(epochs):
+    pbar = tqdm(range(epochs), desc="training", unit="epoch")
+    for epoch in pbar:
         state.epoch = epoch
         running = 0.0
         for i, batch in enumerate(loader):
@@ -64,13 +65,15 @@ def train(model: nn.Module, sde: SDE, loader: DataLoader, *, lr: float,
             running += loss.item()
             state.step += 1
             if state.step % log_every == 0:
-                print(f"[e{epoch:4d} s{state.step:6d}] loss={loss.item():.4f}")
+                tqdm.write(f"[e{epoch:4d} s{state.step:6d}] loss={loss.item():.4f}")
 
         avg = running / max(1, len(loader))
         if avg < state.best_loss:
             state.best_loss = avg
             torch.save({"model": model.state_dict(), "state": state.__dict__},
                        ckpt_path)
+        pbar.set_postfix(loss=f"{avg:.4f}", best=f"{state.best_loss:.4f}")
+    pbar.close()
     return state
 
 
