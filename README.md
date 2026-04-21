@@ -276,6 +276,7 @@ Trois faits stylisés sont calculés par `src/stylized_facts.py` :
 1. **Queues lourdes** — exposant α estimé sur les 5 % supérieurs de |r_t| via `powerlaw.Fit`. Les estimateurs Hill et `powerlaw` peuvent différer de ± 0,5 ; le rapport inclut les deux.
 2. **Clustering de volatilité** — autocorrélation de |r_t| pour les décalages 1…1000, tracée en échelle log-log (décroissance en loi de puissance attendue).
 3. **Effet de levier** —
+
    $$
    L(k) = \frac{\mathbb{E}[r_t\, r_{t+k}^2 - r_t\, |r_t|^2]}{\mathbb{E}[|r_t|^2]^2}
    $$
@@ -302,7 +303,7 @@ Projet réalisé en binôme/trinôme dans le cadre du Master MIDS (Université P
 
 - Khac-Vinh **TANG** — *pipeline de données + extension crypto*
 - Linh-Chi **VU** — *modèle CSDI + entraînement*
-- [Membre 3] — *évaluation + rapport*
+- Boutheina
 
 ---
 
@@ -321,3 +322,4 @@ Projet réalisé en binôme/trinôme dans le cadre du Master MIDS (Université P
 Ce projet est distribué sous licence MIT — voir [LICENSE](LICENSE).
 
 Le code est mis à disposition à des fins pédagogiques et de recherche. Les droits sur le papier reproduit appartiennent à leurs auteurs originaux.
+======================================================================================================================================================
