@@ -12,6 +12,9 @@ Reproduction et extension de **Kim, Choi, Kim (2025)** — *A diffusion-based ge
 2. [Structure du projet](#structure-du-projet)
 3. [Installation](#installation)
 4. [Utilisation rapide](#utilisation-rapide)
+   - [Option A — CPU](#option-a--reproduction-cpu-recommandée-pour-tester-sans-gpu)
+   - [Option B — GPU](#option-b--test-et-reproduction-sur-gpu)
+   - [Option C — Pipeline manuel](#option-c--pipeline-manuel-pas-à-pas)
 5. [Reproduction complète du papier](#reproduction-complète-du-papier)
 6. [Extensions](#extensions)
 7. [Configuration](#configuration)
@@ -150,7 +153,97 @@ Pour un test rapide (quelques minutes) :
 EPOCHS=50 bash scripts/reproduce_cpu.sh
 ```
 
-### Option B — Pipeline manuel pas à pas
+### Option B — Test et reproduction sur GPU
+
+Le papier a été entraîné sur GPU (L=2048, 1000 epochs). Si vous disposez d'une carte CUDA, procédez par paliers croissants pour valider l'installation avant de lancer la grille complète.
+
+#### B.1 Vérifier que CUDA est disponible
+
+```bash
+python -c "import torch; print('CUDA:', torch.cuda.is_available(), '| device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'); print('VRAM:', round(torch.cuda.get_device_properties(0).total_memory/1e9, 2), 'GB') if torch.cuda.is_available() else None"
+```
+
+Sortie attendue (exemple) :
+
+```
+CUDA: True | device: NVIDIA GeForce RTX 3090
+VRAM: 24.0 GB
+```
+
+Si `CUDA: False`, réinstaller `torch` avec la build CUDA adaptée à votre driver (voir [pytorch.org/get-started](https://pytorch.org/get-started/locally/)).
+
+> Dans `configs/paper.yaml`, le champ `train.device: cuda` est déjà fixé. Les scripts `train.py` et `generate.py` détectent automatiquement le GPU et retombent sur CPU si CUDA n'est pas disponible.
+
+#### B.2 Smoke-test (≈ 2 min) — 1 modèle, 5 epochs
+
+Vérifie que le forward/backward passe sans OOM et qu'une figure est produite :
+
+```bash
+# 1. Préparer les données (cache persistant)
+python -m src.data --universe sp500 --min-years 40 --seq-len 2048 --stride 400
+
+# 2. Entraînement éclair (5 epochs, ~2 min sur RTX 3090)
+python scripts/train.py --config configs/paper.yaml \
+    --sde gbm --schedule cosine --epochs 5 --tag smoke_gpu
+
+# 3. Génération rapide (8 échantillons au lieu de 120)
+python scripts/generate.py --config configs/paper.yaml \
+    --ckpt experiments/checkpoints/smoke_gpu.pt \
+    --n-samples 8 --out results/samples_smoke.npy
+
+# 4. Évaluation
+python scripts/evaluate.py \
+    --real data/processed/sp500_L2048_S400.npz \
+    --runs smoke=results/samples_smoke.npy \
+    --out results/figures/smoke_gpu.png
+```
+
+Si `results/figures/smoke_gpu.png` est généré sans erreur, le pipeline GPU est fonctionnel. Les faits stylisés seront mauvais à 5 epochs — c'est normal, le but est uniquement de valider l'exécution de bout en bout.
+
+#### B.3 Test d'une configuration cible (≈ 30 min — 2 h selon GPU)
+
+Une seule configuration à l'échelle du papier (MBG + cosinus, la meilleure selon §4.2) :
+
+```bash
+EPOCHS=300 python scripts/train.py --config configs/paper.yaml \
+    --sde gbm --schedule cosine --tag sp500_gbm_cosine
+
+python scripts/generate.py --config configs/paper.yaml \
+    --ckpt experiments/checkpoints/sp500_gbm_cosine.pt \
+    --n-samples 120 --out results/samples_gbm_cosine.npy
+
+python scripts/evaluate.py \
+    --real data/processed/sp500_L2048_S400.npz \
+    --runs gbm_cosine=results/samples_gbm_cosine.npy \
+    --out results/figures/gbm_cosine_gpu.png
+```
+
+Attendu : α ∈ [3,0 ; 5,0] (la cible papier est 3,78 ; l'empirique S&P 500 est 4,35).
+
+#### B.4 Reproduction complète sur GPU (grille 3×3)
+
+Voir la section [Reproduction complète du papier](#reproduction-complète-du-papier) ci-dessous. Temps indicatifs :
+
+| GPU              | VRAM | 1000 epochs × 9 modèles |
+| ---------------- | ---- | ------------------------- |
+| RTX 3060 (12 GB) | 12   | ~4 jours                  |
+| RTX 3090 / 4090  | 24   | ~1,5 à 2 jours           |
+| A100 40 GB       | 40   | ~20 h                     |
+
+#### B.5 Surveillance et dépannage GPU
+
+```bash
+# Dans un autre terminal pendant l'entraînement
+watch -n 2 nvidia-smi
+```
+
+**OOM (out-of-memory)** — réduire `train.batch_size` de 64 → 32 dans `configs/paper.yaml`, ou passer à `configs/cpu_small.yaml` (L=256) avec `device: cuda` pour un modèle plus léger tout en utilisant le GPU.
+
+**GPU sous-utilisé (< 50 %)** — le dataloader CPU est souvent le goulot ; augmenter `train.num_workers` si exposé, sinon ignorer (l'entraînement est déjà rapide à L=2048).
+
+**Forcer le CPU même avec un GPU présent** — éditer `configs/paper.yaml` et remplacer `device: cuda` par `device: cpu`.
+
+### Option C — Pipeline manuel pas à pas
 
 ```bash
 # 1. Préparer le dataset
