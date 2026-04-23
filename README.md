@@ -143,9 +143,13 @@ bash scripts/reproduce_cpu.sh
 Cela exécute dans l'ordre :
 
 1. Téléchargement de 20 grandes capitalisations anciennes (≥ 30 ans d'historique) ;
-2. Entraînement de trois modèles : **MBG + cosinus**, **MBG + exponentiel**, **VE + cosinus** ;
-3. Génération de 120 séries synthétiques par modèle ;
-4. Calcul des faits stylisés et production de `results/figures/cpu_reproduction.png`.
+2. **Pour chacun** des trois modèles (**MBG + cosinus**, **MBG + exponentiel**, **VE + cosinus**), de bout en bout dans la même itération :
+   - Entraînement (checkpoint sauvegardé dès la meilleure loss) ;
+   - Génération de 120 séries synthétiques ;
+   - Évaluation des faits stylisés + figure propre au modèle dans `results/figures/cpu_<sde>_<schedule>.png`.
+3. Figure agrégée comparant les trois modèles : `results/figures/cpu_reproduction.png`.
+
+Dès qu'un modèle termine (~50 min à 2 h selon la config), sa figure est disponible — plus besoin d'attendre la fin des trois runs pour voir un résultat. Le script est **resumable** : checkpoints, samples et figures déjà présents sont automatiquement skippés, donc une relance après interruption reprend là où elle s'est arrêtée.
 
 Pour un test rapide (quelques minutes) :
 
@@ -275,6 +279,13 @@ Pour la grille 3×3 complète (VE / VP / MBG × linéaire / exponentiel / cosinu
 ```bash
 bash scripts/reproduce_all.sh
 ```
+
+Le script traite les 9 configurations **une par une, de bout en bout** : pour chaque (SDE, schedule) il enchaîne `train` → `generate` → `evaluate` et produit une figure dédiée `results/figures/sp500_<sde>_<schedule>.png` avant de passer à la suivante. Une fois les 9 modèles terminés, la figure agrégée 3×3 est écrite dans `results/figures/sp500_grid_3x3.png`.
+
+Avantages :
+
+- **Résultats intermédiaires** dès qu'un modèle termine (~1,5 à 2 h sur RTX 3090) — pas besoin d'attendre la fin des 9 runs pour voir une figure.
+- **Resumable** : si la session est interrompue (timeout, OOM, reboot), relancer la même commande reprend là où elle s'est arrêtée (checkpoints, samples et figures déjà présents sont skippés).
 
 > **Attention** : 9 modèles × 1000 epochs × L=2048 représentent **plusieurs jours-GPU**. Pour une vérification rapide de l'implémentation, utiliser :
 >
