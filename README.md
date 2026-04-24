@@ -483,6 +483,7 @@ Le script `scripts/evaluate.py` produit un tableau comparatif α (nôtre vs papi
    ```bash
    rm -f data/raw/<universe>.parquet data/processed/<universe>_L*.npz
    ```
+   > 📘 Analyse complète (tableau α ours-vs-papier, diagnostic pas-à-pas, procédure de correction) : [docs/sp500_reproduction_notes.md](docs/sp500_reproduction_notes.md).
 
 ---
 

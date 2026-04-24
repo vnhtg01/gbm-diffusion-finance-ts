@@ -77,9 +77,9 @@ results/figures/*
 # =========================================================
 # Documentation vietnamienne (versions internes, non publi\u00e9es)
 # =========================================================
-readme_vi.md
-reproduction_vi.md
-*_vi.md
+*.md
+!README.md
+!docs/*.md
 
 # =========================================================
 # IDE / OS
