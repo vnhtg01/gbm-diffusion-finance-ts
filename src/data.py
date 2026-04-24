@@ -20,6 +20,14 @@ SP500_GITHUB_CSV = (
     "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/"
     "main/data/constituents.csv"
 )
+CAC40_WIKI_URL = "https://en.wikipedia.org/wiki/CAC_40"
+# Long-history CAC 40 blue-chips (Yahoo ".PA" suffix). Chosen for >=25y of
+# daily history so we can reuse the paper's sliding-window pipeline.
+CAC40_DEFAULT_TICKERS = [
+    "AI.PA", "BN.PA", "BNP.PA", "CA.PA", "CS.PA", "DG.PA", "EN.PA", "KER.PA",
+    "MC.PA", "ML.PA", "OR.PA", "RI.PA", "SAN.PA", "SGO.PA", "SU.PA", "TTE.PA",
+    "VIV.PA", "AC.PA", "PUB.PA", "CAP.PA",
+]
 BROWSER_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -48,6 +56,26 @@ def fetch_sp500_tickers(source: str = "github") -> list[str]:
     tickers = df["Symbol"].astype(str).tolist()
     # Paper §3.1.2: exclude tickers with non-standard symbols (e.g., BRK.B, BF.B).
     return [t for t in tickers if "." not in t]
+
+
+def fetch_cac40_tickers() -> list[str]:
+    """Fetch current CAC 40 tickers (Yahoo ".PA" suffix).
+
+    Scrapes the CAC 40 Wikipedia constituents table. Falls back to a curated
+    list of long-history blue-chips if the network scrape fails.
+    """
+    try:
+        html = _http_get(CAC40_WIKI_URL)
+        tables = pd.read_html(io.StringIO(html))
+        for t in tables:
+            cols = [str(c).lower() for c in t.columns]
+            if any("ticker" in c for c in cols):
+                col = t.columns[[("ticker" in c) for c in cols].index(True)]
+                raw = t[col].astype(str).str.extract(r"([A-Z0-9]+)")[0].dropna()
+                return [f"{s}.PA" for s in raw.tolist() if s]
+    except Exception:
+        pass
+    return list(CAC40_DEFAULT_TICKERS)
 
 
 def download_prices(tickers: list[str], start: str = "1980-01-01") -> pd.DataFrame:
@@ -111,6 +139,8 @@ def load_or_build(spec: DatasetSpec, raw_dir: Path, processed_dir: Path) -> np.n
     else:
         if spec.universe == "sp500":
             tickers = spec.tickers or fetch_sp500_tickers()
+        elif spec.universe == "cac40":
+            tickers = spec.tickers or fetch_cac40_tickers()
         elif spec.universe == "crypto":
             tickers = spec.tickers or ["BTC-USD", "ETH-USD"]
         elif spec.universe == "fx":
@@ -131,7 +161,7 @@ def load_or_build(spec: DatasetSpec, raw_dir: Path, processed_dir: Path) -> np.n
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--universe", default="sp500",
-                    choices=["sp500", "crypto", "fx", "commodities"])
+                    choices=["sp500", "cac40", "crypto", "fx", "commodities"])
     ap.add_argument("--tickers", default=None, help="comma-separated override")
     ap.add_argument("--min-years", type=int, default=40)
     ap.add_argument("--seq-len", type=int, default=2048)

@@ -16,11 +16,13 @@ Reproduction et extension de **Kim, Choi, Kim (2025)** — *A diffusion-based ge
    - [Option B — GPU](#option-b--test-et-reproduction-sur-gpu)
    - [Option C — Pipeline manuel](#option-c--pipeline-manuel-pas-à-pas)
 5. [Reproduction complète du papier](#reproduction-complète-du-papier)
-6. [Extensions](#extensions)
-7. [Configuration](#configuration)
-8. [Métriques d&#39;évaluation](#métriques-dévaluation)
-9. [Équipe](#équipe)
-10. [Références](#références)
+6. [Dataset alternatif : CAC 40](#dataset-alternatif--cac-40-actions-françaises)
+7. [Extensions](#extensions)
+8. [Configuration](#configuration)
+9. [Métriques d&#39;évaluation](#métriques-dévaluation)
+10. [Pièges courants](#pièges-courants)
+11. [Équipe](#équipe)
+12. [Références](#références)
 
 ---
 
@@ -54,8 +56,10 @@ Projet_ML_in_Finance/
 ├── .gitignore
 │
 ├── configs/                    # Fichiers de configuration YAML
-│   ├── paper.yaml              # Hyperparamètres verrouillés sur le papier (GPU)
-│   ├── cpu_small.yaml          # Version réduite ~10× pour CPU
+│   ├── paper.yaml              # S&P 500 — papier, GPU, L=2048, 1000 epochs
+│   ├── cpu_small.yaml          # S&P 500 — version CPU réduite ~10×
+│   ├── paper_cac40.yaml        # CAC 40  — papier, GPU, L=2048, 1000 epochs
+│   ├── cpu_cac40.yaml          # CAC 40  — version CPU réduite ~10×
 │   └── default.yaml            # Configuration flexible (extensions)
 │
 ├── src/                        # Code source du modèle
@@ -70,8 +74,10 @@ Projet_ML_in_Finance/
 │   ├── train.py                # Entraînement d'un modèle
 │   ├── generate.py             # Génération d'échantillons synthétiques
 │   ├── evaluate.py             # Calcul des faits stylisés et figures
-│   ├── reproduce_all.sh        # Grille 3×3 complète (GPU, échelle papier)
-│   └── reproduce_cpu.sh        # 3 configurations clés (CPU, échelle réduite)
+│   ├── reproduce_all.sh        # S&P 500 — grille 3×3 complète (GPU)
+│   ├── reproduce_cpu.sh        # S&P 500 — 3 configurations clés (CPU)
+│   ├── reproduce_cac40_all.sh  # CAC 40  — grille 3×3 complète (GPU)
+│   └── reproduce_cac40.sh      # CAC 40  — 3 configurations clés (CPU)
 │
 ├── notebooks/                  # Notebooks d'analyse exploratoire
 ├── data/
@@ -308,6 +314,79 @@ Les configurations **MBG + exponentiel** et **MBG + cosinus** se rapprochent le 
 
 ---
 
+## Dataset alternatif : CAC 40 (actions françaises)
+
+En plus de la reproduction S&P 500, le dépôt propose un **second flux indépendant** sur le **CAC 40**, l'indice phare d'Euronext Paris. Les deux flux utilisent le même code source (`src/`) et le même pipeline ; seul le bloc `data.universe` distingue leurs artefacts.
+
+### Vue d'ensemble des flux parallèles
+
+| Univers                | Config CPU       | Config GPU (papier)    | Script CPU                | Script GPU (3×3)             |
+| ---------------------- | ---------------- | ---------------------- | ------------------------- | ---------------------------- |
+| **S&P 500** (original) | `cpu_small.yaml` | `paper.yaml`           | `reproduce_cpu.sh`        | `reproduce_all.sh`           |
+| **CAC 40** (ajouté)    | `cpu_cac40.yaml` | `paper_cac40.yaml`     | `reproduce_cac40.sh`      | `reproduce_cac40_all.sh`     |
+
+Les deux flux peuvent s'exécuter côte à côte : **checkpoints, samples, fenêtres prétraitées et figures sont namespacés** par univers (`cac40_*` vs. `sp500_*`) et ne se recouvrent jamais.
+
+### Spécificités du CAC 40
+
+- **40 constituants** (vs. ~500 pour le S&P 500) récupérés automatiquement via [`fetch_cac40_tickers`](src/data.py) (Wikipedia), avec fallback sur 20 blue-chips à long historique (AI.PA, BN.PA, MC.PA, OR.PA, SAN.PA, TTE.PA, …).
+- **Historique Yahoo** : la plupart des tickers `.PA` remontent à 1987–1988 → `min_years` est abaissé de **40 (papier) à 25** dans `cpu_cac40.yaml` et `paper_cac40.yaml`. Le reste des hyperparamètres est strictement identique au papier.
+- **Pas de benchmark α dans le papier** : le rapport comparera la cohérence interne (MBG vs. VE, effet du schedule) et la proximité vis-à-vis du CAC 40 **réel**, sans référence paper-α.
+
+### Flux CPU CAC 40 (≈ 2 h 30 sur i5)
+
+Équivalent de l'Option A mais sur le CAC 40. Exécute trois configurations (**MBG + cosinus**, **MBG + exponentiel**, **VE + cosinus**) de bout en bout sur 20 blue-chips français hard-codés dans `cpu_cac40.yaml` :
+
+```bash
+bash scripts/reproduce_cac40.sh
+# Smoke test rapide :
+EPOCHS=50 bash scripts/reproduce_cac40.sh
+```
+
+Artefacts produits :
+
+- `experiments/checkpoints/cac40_<sde>_<sched>.pt` — 3 checkpoints
+- `results/samples_cac40_<sde>_<sched>.npy` — 3 × 120 séries synthétiques
+- `results/figures/cac40_<sde>_<sched>.png` — une figure par modèle
+- `results/figures/cac40_reproduction.png` — figure agrégée comparative
+
+### Flux GPU paper-scale CAC 40 (grille 3×3 complète)
+
+Équivalent de l'Option B.4 / `reproduce_all.sh` mais sur le CAC 40. Exécute la grille complète **VE / VP / MBG × linéaire / exponentiel / cosinus** à L=2048 et 1000 epochs :
+
+```bash
+bash scripts/reproduce_cac40_all.sh
+# Smoke test rapide :
+EPOCHS=50 bash scripts/reproduce_cac40_all.sh
+```
+
+Le script est **resumable** (checkpoints, samples et figures déjà présents sont skippés) et produit des résultats intermédiaires après chaque modèle.
+
+Artefacts produits :
+
+- `data/processed/cac40_L2048_S400.npz` — fenêtres CAC 40
+- `experiments/checkpoints/cac40_<sde>_<sched>.pt` — 9 checkpoints
+- `results/samples_cac40_<sde>_<sched>.npy` — 9 × 120 séries synthétiques
+- `results/figures/cac40_<sde>_<sched>.png` — 9 figures par modèle
+- `results/figures/cac40_grid_3x3.png` — figure agrégée 3×3
+
+> **Attention** : comme pour le S&P 500, 9 modèles × 1000 epochs × L=2048 représentent **plusieurs jours-GPU**. En pratique le dataset CAC 40 est plus petit (moins de tickers → moins de fenêtres), donc l'entraînement est proportionnellement plus rapide mais le risque d'under-fitting est plus élevé.
+
+### Coexistence des deux flux
+
+| Artefact           | S&P 500                                  | CAC 40                                        |
+| ------------------ | ---------------------------------------- | --------------------------------------------- |
+| Données brutes     | `data/raw/sp500.parquet`                 | `data/raw/cac40.parquet`                      |
+| Fenêtres           | `data/processed/sp500_L*.npz`            | `data/processed/cac40_L*.npz`                 |
+| Checkpoints        | `experiments/checkpoints/sp500_*.pt`     | `experiments/checkpoints/cac40_*.pt`          |
+| Samples            | `results/samples_{sde}_{sched}.npy`      | `results/samples_cac40_{sde}_{sched}.npy`     |
+| Figures par modèle | `results/figures/sp500_*.png`            | `results/figures/cac40_*.png`                 |
+| Grille 3×3        | `results/figures/sp500_grid_3x3.png`     | `results/figures/cac40_grid_3x3.png`          |
+
+Vous pouvez exécuter par exemple `bash scripts/reproduce_cpu.sh` puis `bash scripts/reproduce_cac40.sh` sur la même machine, dans n'importe quel ordre — les caches et figures des deux univers sont isolés.
+
+---
+
 ## Extensions
 
 Conformément aux consignes de validation du cours (*changer le jeu de données OU un choix de modélisation clé*), deux extensions sont implémentées :
@@ -346,13 +425,15 @@ python scripts/train.py --config configs/default.yaml --sde cev
 
 ## Configuration
 
-Trois fichiers YAML sont fournis dans `configs/` :
+Cinq fichiers YAML sont fournis dans `configs/` :
 
-| Fichier            | Usage                                                                        |
-| ------------------ | ---------------------------------------------------------------------------- |
-| `paper.yaml`     | Hyperparamètres verrouillés sur le papier (§4).**Ne pas modifier.** |
-| `cpu_small.yaml` | Version réduite ~10× (L=256, 2 blocs, 300 epochs) pour un CPU              |
-| `default.yaml`   | Configuration flexible pour les extensions                                   |
+| Fichier              | Univers    | Usage                                                                              |
+| -------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| `paper.yaml`         | S&P 500    | Hyperparamètres verrouillés sur le papier (§4). **Ne pas modifier.**              |
+| `cpu_small.yaml`     | S&P 500    | Version CPU réduite ~10× (L=256, 2 blocs, 300 epochs)                             |
+| `paper_cac40.yaml`   | CAC 40     | Miroir paper-scale adapté au CAC 40 (`min_years=25`)                              |
+| `cpu_cac40.yaml`     | CAC 40     | Version CPU réduite ~10× sur 20 blue-chips français                               |
+| `default.yaml`       | (flexible) | Configuration pour les extensions                                                  |
 
 ### Hyperparamètres du papier (§4)
 
@@ -398,6 +479,10 @@ Le script `scripts/evaluate.py` produit un tableau comparatif α (nôtre vs papi
 3. **Estimateurs de α** : différences de ± 0,5 entre `powerlaw.Fit` et Hill sont normales.
 4. **Mémoire GPU** : L=2048, batch=64, 128 canaux ≈ 4 GB VRAM. Réduire le batch à 32 en cas d'OOM.
 5. **Temps d'échantillonnage** : N=2000 × 120 échantillons × L=2048 → 10 à 30 min par modèle selon le GPU.
+6. **Pollution du cache `data/raw/<universe>.parquet`** : le nom du fichier cache dépend uniquement de `universe`, pas de la liste de tickers. Si vous lancez d'abord `reproduce_cpu.sh` (qui hard-code 20 tickers) puis `reproduce_all.sh` (liste S&P 500 complète), le second **réutilise le cache à 20 tickers** et entraîne donc sur un dataset 20× plus petit que le papier (symptôme observé : `sp500: (420, 2048) windows` et α synthétiques 1,5 à 3,5 trop hauts). Même piège pour le CAC 40. **Solution** avant de basculer d'un sous-ensemble hard-codé à une liste complète :
+   ```bash
+   rm -f data/raw/<universe>.parquet data/processed/<universe>_L*.npz
+   ```
 
 ---
 

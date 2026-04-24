@@ -1,0 +1,66 @@
+# CPU-scaled config on CAC 40 (French blue-chips).
+# Mirrors cpu_small.yaml but swaps the universe to CAC 40.
+# CAC 40 has fewer constituents and shorter Yahoo history than S&P 500,
+# so we soften min_years to 25 and hand-pick 20 long-history tickers.
+
+data:
+  universe: cac40
+  # 20 CAC 40 blue-chips with the longest daily history on Yahoo (".PA").
+  tickers:
+    - AI.PA      # Air Liquide
+    - BN.PA      # Danone
+    - BNP.PA     # BNP Paribas
+    - CA.PA      # Carrefour
+    - CS.PA      # AXA
+    - DG.PA      # Vinci
+    - EN.PA      # Bouygues
+    - KER.PA     # Kering (ex-PPR)
+    - MC.PA      # LVMH
+    - ML.PA      # Michelin
+    - OR.PA      # L'Oréal
+    - RI.PA      # Pernod Ricard
+    - SAN.PA     # Sanofi
+    - SGO.PA     # Saint-Gobain
+    - SU.PA      # Schneider Electric
+    - TTE.PA     # TotalEnergies
+    - VIV.PA     # Vivendi
+    - AC.PA      # Accor
+    - PUB.PA     # Publicis
+    - CAP.PA     # Capgemini
+  min_years: 25              # CAC 40 history is shorter than S&P 500
+  seq_len: 256               # paper: 2048 → /8
+  stride: 64                 # paper: 400 → same ratio
+
+sde:
+  type: gbm
+  cev_gamma: 1.0
+  schedule: cosine
+  sigma_min: 0.01
+  sigma_max: 1.0
+  T: 1.0
+  N_reverse: 500
+
+model:
+  channels: 64
+  diffusion_emb_dim: 128
+  feature_emb_dim: 32
+  n_heads: 4
+  n_layers: 2
+  dropout: 0.0
+
+train:
+  batch_size: 32
+  epochs: 300
+  lr: 1.0e-4
+  weight_decay: 0.0
+  grad_clip: 1.0
+  num_workers: 2
+  device: cpu
+  ckpt_dir: experiments/checkpoints
+  log_every: 100
+
+eval:
+  n_samples: 120
+  tail_fraction: 0.05
+  max_lag_vc: 128
+  max_lag_lev: 64
