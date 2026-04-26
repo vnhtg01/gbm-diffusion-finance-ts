@@ -108,6 +108,7 @@ def sliding_windows(series: np.ndarray, L: int, stride: int) -> np.ndarray:
 def build_dataset(prices: pd.DataFrame, L: int, stride: int) -> np.ndarray:
     """Return (N, L) array of log-return windows, across tickers."""
     lr = log_returns(prices)
+    lr = lr.apply(lambda x: (x - x.mean()) / (x.std() + 1e-8))  ##modif
     windows = []
     for col in lr.columns:
         s = lr[col].dropna().to_numpy()

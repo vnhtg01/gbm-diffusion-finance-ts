@@ -1,12 +1,12 @@
 # Paper-scale config on CAC 40 (French blue-chips).
-# Mirrors configs/paper.yaml exactly; only the `data` block is swapped to CAC 40.
+# Mirrors configs/paper.yaml; only the `data` block is swapped to CAC 40.
 # CAC 40 has fewer constituents and shorter Yahoo history than S&P 500, so
-# min_years is softened from 40 to 25. Everything else matches the paper.
+# min_years is softened from 40 to 20. Everything else matches the paper.
 
 data:
   universe: cac40
   tickers: null               # null => fetch_cac40_tickers() from Wikipedia
-  min_years: 25               # CAC 40 history is shorter than S&P 500
+  min_years: 20               # CAC 40 history is shorter than S&P 500
   seq_len: 2048               # paper: 2048
   stride: 400                 # paper: 400
 
@@ -29,7 +29,7 @@ model:
 
 train:
   batch_size: 64
-  epochs: 1000
+  epochs: 100                 # reduced from paper's 1000 for compute budget
   lr: 1.0e-4
   weight_decay: 0.0
   grad_clip: 1.0

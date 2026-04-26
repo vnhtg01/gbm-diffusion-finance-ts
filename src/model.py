@@ -105,8 +105,11 @@ class ScoreNet(nn.Module):
             nn.SiLU(),
             nn.Linear(diff_emb_dim, diff_emb_dim),
         )
+        self.diff_proj_to_channels = nn.Linear(diff_emb_dim, channels)
         self.feat_emb = nn.Parameter(torch.randn(1, feat_emb_dim, 1) * 0.02)
-        self.transformer = TransformerLayer(channels, n_heads, dropout=dropout)
+        self.transformer = nn.Sequential(
+            *[TransformerLayer(channels, n_heads, dropout=dropout) for _ in range(4)]
+        )
         self.blocks = nn.ModuleList([
             GatedResidualBlock(channels, diff_emb_dim, feat_emb_dim)
             for _ in range(n_layers)
@@ -121,10 +124,13 @@ class ScoreNet(nn.Module):
         """x: (B, 1, L); t: (B,)."""
         B, _, L = x.shape
         d_emb = self.diff_mlp(diffusion_step_embedding(t, self.diff_emb_dim))
+        d_emb_proj = self.diff_proj_to_channels(d_emb)   # (B, 128)
+        d_emb_expanded = d_emb_proj.unsqueeze(-1)        # (B, 128, 1)
         p_emb = positional_embedding(L, self.channels, x.device)          # (1,C,L)
         f_emb = self.feat_emb.expand(B, -1, L)                            # (B,Df,L)
 
-        h = self.input_proj(x) + p_emb
+
+        h = self.input_proj(x) + p_emb + d_emb_expanded
         h = self.transformer(h)
 
         skip_sum = 0

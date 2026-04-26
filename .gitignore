@@ -40,7 +40,8 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-
+docs/*
+report/*
 experiments/checkpoints/*
 !experiments/checkpoints/.gitkeep
 
@@ -90,3 +91,4 @@ results/figures/*
 *.swo
 .DS_Store
 Thumbs.db
+
