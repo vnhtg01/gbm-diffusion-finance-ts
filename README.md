@@ -107,7 +107,7 @@ Les fichiers volumineux (données, points de contrôle, échantillons, figures) 
 ```bash
 # 1. Cloner le dépôt
 git clone <URL_DU_DEPOT>
-cd Projet_ML_in_Finance
+cd <PROJET>
 
 # 2. Créer un environnement virtuel isolé
 python -m venv .venv
@@ -495,7 +495,7 @@ Projet réalisé en trinôme dans le cadre du cursus ENSAE.
 
 - Khac-Vinh **TANG**
 - Linh-Chi **VU** 
-- Botheinetou Ebetty
+- Botheinetou **Ebetty**
 
 ---
 
