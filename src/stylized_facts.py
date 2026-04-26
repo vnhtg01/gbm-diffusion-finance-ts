@@ -29,7 +29,7 @@ def tail_exponent(returns: np.ndarray, tail_fraction: float = 0.05) -> float:
     xmin = tail[0]
     try:
         import powerlaw
-        fit = powerlaw.Fit(r, xmin=xmin, verbose=False)
+        fit = powerlaw.Fit(tail, xmin=xmin, verbose=False)
         return float(fit.alpha)
     except Exception:
         # Hill estimator
@@ -40,9 +40,9 @@ def autocorr(x: np.ndarray, lag: int) -> float:
     x = x - x.mean()
     if lag == 0:
         return 1.0
-    num = (x[:-lag] * x[lag:]).mean()
-    den = (x * x).mean()
-    return float(num / den) if den > 0 else 0.0
+    num = np.mean(x[:-lag] * x[lag:])
+    den = np.var(x)
+    return float(num / (den + 1e-12))
 
 
 def volatility_clustering(returns: np.ndarray, max_lag: int = 1000) -> np.ndarray:
@@ -60,25 +60,26 @@ def volatility_clustering(returns: np.ndarray, max_lag: int = 1000) -> np.ndarra
 
 
 def leverage_effect(returns: np.ndarray, max_lag: int = 100) -> np.ndarray:
-    """L(k) for k = 0..max_lag. Input (N, L) or (L,)."""
     if returns.ndim == 1:
         returns = returns[None, :]
+
     L_vals = np.zeros(max_lag + 1)
-    denom_total = 0.0
+
     for row in returns:
         r = row - row.mean()
-        abs_sq = r ** 2
-        denom = (abs_sq.mean()) ** 2
-        denom_total += denom
+        denom = (r**2).mean()**2
+
+        base_term = (r * r**2).mean()
+
         for k in range(max_lag + 1):
             if k == 0:
-                num = (r * r ** 2 - r * abs_sq).mean()
+                term = base_term
             else:
-                num = (r[:-k] * r[k:] ** 2 - r[:-k] * abs_sq[:-k]).mean()
-            L_vals[k] += num
-    L_vals /= (denom_total + 1e-12)
-    return L_vals
+                term = (r[:-k] * (r[k:]**2)).mean()
 
+            L_vals[k] += (term - base_term) / (denom + 1e-12)
+
+    return L_vals / returns.shape[0]
 
 def summarize(returns: np.ndarray, tail_fraction: float = 0.05,
               max_lag_vc: int = 1000, max_lag_lev: int = 100) -> dict:

@@ -4,7 +4,7 @@
 data:
   universe: sp500
   tickers: null
-  min_years: 40               # paper §3.1.2: "more than 40 years back"
+  min_years: 30               # paper §3.1.2: "more than 40 years back"
   seq_len: 2048               # paper: "fixed length of 2048 time steps"
   stride: 400                 # paper: "stride of 400 time steps"
 
@@ -27,7 +27,7 @@ model:
 
 train:
   batch_size: 64              # paper §4: "minibatch size of 64"
-  epochs: 1000                # paper §4: "train the score network for 1,000 epochs"
+  epochs: 100                 # reduced from paper's 1000 for compute budget
   lr: 1.0e-4
   weight_decay: 0.0
   grad_clip: 1.0

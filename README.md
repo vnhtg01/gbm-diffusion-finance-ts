@@ -320,10 +320,10 @@ En plus de la reproduction S&P 500, le dépôt propose un **second flux indépen
 
 ### Vue d'ensemble des flux parallèles
 
-| Univers                | Config CPU       | Config GPU (papier)    | Script CPU                | Script GPU (3×3)             |
-| ---------------------- | ---------------- | ---------------------- | ------------------------- | ---------------------------- |
-| **S&P 500** (original) | `cpu_small.yaml` | `paper.yaml`           | `reproduce_cpu.sh`        | `reproduce_all.sh`           |
-| **CAC 40** (ajouté)    | `cpu_cac40.yaml` | `paper_cac40.yaml`     | `reproduce_cac40.sh`      | `reproduce_cac40_all.sh`     |
+| Univers                      | Config CPU         | Config GPU (papier)  | Script CPU             | Script GPU (3×3)          |
+| ---------------------------- | ------------------ | -------------------- | ---------------------- | -------------------------- |
+| **S&P 500** (original) | `cpu_small.yaml` | `paper.yaml`       | `reproduce_cpu.sh`   | `reproduce_all.sh`       |
+| **CAC 40** (ajouté)   | `cpu_cac40.yaml` | `paper_cac40.yaml` | `reproduce_cac40.sh` | `reproduce_cac40_all.sh` |
 
 Les deux flux peuvent s'exécuter côte à côte : **checkpoints, samples, fenêtres prétraitées et figures sont namespacés** par univers (`cac40_*` vs. `sp500_*`) et ne se recouvrent jamais.
 
@@ -374,14 +374,14 @@ Artefacts produits :
 
 ### Coexistence des deux flux
 
-| Artefact           | S&P 500                                  | CAC 40                                        |
-| ------------------ | ---------------------------------------- | --------------------------------------------- |
-| Données brutes     | `data/raw/sp500.parquet`                 | `data/raw/cac40.parquet`                      |
-| Fenêtres           | `data/processed/sp500_L*.npz`            | `data/processed/cac40_L*.npz`                 |
-| Checkpoints        | `experiments/checkpoints/sp500_*.pt`     | `experiments/checkpoints/cac40_*.pt`          |
-| Samples            | `results/samples_{sde}_{sched}.npy`      | `results/samples_cac40_{sde}_{sched}.npy`     |
-| Figures par modèle | `results/figures/sp500_*.png`            | `results/figures/cac40_*.png`                 |
-| Grille 3×3        | `results/figures/sp500_grid_3x3.png`     | `results/figures/cac40_grid_3x3.png`          |
+| Artefact            | S&P 500                                | CAC 40                                      |
+| ------------------- | -------------------------------------- | ------------------------------------------- |
+| Données brutes     | `data/raw/sp500.parquet`             | `data/raw/cac40.parquet`                  |
+| Fenêtres           | `data/processed/sp500_L*.npz`        | `data/processed/cac40_L*.npz`             |
+| Checkpoints         | `experiments/checkpoints/sp500_*.pt` | `experiments/checkpoints/cac40_*.pt`      |
+| Samples             | `results/samples_{sde}_{sched}.npy`  | `results/samples_cac40_{sde}_{sched}.npy` |
+| Figures par modèle | `results/figures/sp500_*.png`        | `results/figures/cac40_*.png`             |
+| Grille 3×3         | `results/figures/sp500_grid_3x3.png` | `results/figures/cac40_grid_3x3.png`      |
 
 Vous pouvez exécuter par exemple `bash scripts/reproduce_cpu.sh` puis `bash scripts/reproduce_cac40.sh` sur la même machine, dans n'importe quel ordre — les caches et figures des deux univers sont isolés.
 
@@ -427,13 +427,13 @@ python scripts/train.py --config configs/default.yaml --sde cev
 
 Cinq fichiers YAML sont fournis dans `configs/` :
 
-| Fichier              | Univers    | Usage                                                                              |
-| -------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| `paper.yaml`         | S&P 500    | Hyperparamètres verrouillés sur le papier (§4). **Ne pas modifier.**              |
-| `cpu_small.yaml`     | S&P 500    | Version CPU réduite ~10× (L=256, 2 blocs, 300 epochs)                             |
-| `paper_cac40.yaml`   | CAC 40     | Miroir paper-scale adapté au CAC 40 (`min_years=25`)                              |
-| `cpu_cac40.yaml`     | CAC 40     | Version CPU réduite ~10× sur 20 blue-chips français                               |
-| `default.yaml`       | (flexible) | Configuration pour les extensions                                                  |
+| Fichier              | Univers    | Usage                                                                        |
+| -------------------- | ---------- | ---------------------------------------------------------------------------- |
+| `paper.yaml`       | S&P 500    | Hyperparamètres verrouillés sur le papier (§4).**Ne pas modifier.** |
+| `cpu_small.yaml`   | S&P 500    | Version CPU réduite ~10× (L=256, 2 blocs, 300 epochs)                      |
+| `paper_cac40.yaml` | CAC 40     | Miroir paper-scale adapté au CAC 40 (`min_years=25`)                      |
+| `cpu_cac40.yaml`   | CAC 40     | Version CPU réduite ~10× sur 20 blue-chips français                       |
+| `default.yaml`     | (flexible) | Configuration pour les extensions                                            |
 
 ### Hyperparamètres du papier (§4)
 
@@ -483,17 +483,19 @@ Le script `scripts/evaluate.py` produit un tableau comparatif α (nôtre vs papi
    ```bash
    rm -f data/raw/<universe>.parquet data/processed/<universe>_L*.npz
    ```
+
    > 📘 Analyse complète (tableau α ours-vs-papier, diagnostic pas-à-pas, procédure de correction) : [docs/sp500_reproduction_notes.md](docs/sp500_reproduction_notes.md).
+   >
 
 ---
 
 ## Équipe
 
-Projet réalisé en binôme/trinôme dans le cadre du Master MIDS (Université Paris Cité) et du cursus ENSAE.
+Projet réalisé en trinôme dans le cadre du cursus ENSAE.
 
-- Khac-Vinh **TANG** — *pipeline de données + extension crypto*
-- Linh-Chi **VU** — *modèle CSDI + entraînement*
-- Boutheina
+- Khac-Vinh **TANG**
+- Linh-Chi **VU** 
+- Botheinetou Ebetty
 
 ---
 
