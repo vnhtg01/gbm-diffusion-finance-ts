@@ -92,3 +92,6 @@ results/figures/*
 .DS_Store
 Thumbs.db
 
+
+# Local only
+SKILL_QUESTION_ANSWER.txt
