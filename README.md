@@ -121,8 +121,9 @@ pip install -r requirements.txt
 
 ### Dépendances principales
 
-| Paquet         | Rôle                                      |
-| -------------- | ------------------------------------------ |
+
+| Paquet       | Rôle                                      |
+| -------------- | -------------------------------------------- |
 | `torch`      | Réseau de score + entraînement           |
 | `yfinance`   | Téléchargement des prix historiques      |
 | `pandas`     | Manipulation des séries temporelles       |
@@ -234,8 +235,9 @@ Attendu : α ∈ [3,0 ; 5,0] (la cible papier est 3,78 ; l'empirique S&P 500 est
 
 Voir la section [Reproduction complète du papier](#reproduction-complète-du-papier) ci-dessous. Temps indicatifs :
 
+
 | GPU              | VRAM | 1000 epochs × 9 modèles |
-| ---------------- | ---- | ------------------------- |
+| ------------------ | ------ | --------------------------- |
 | RTX 3060 (12 GB) | 12   | ~4 jours                  |
 | RTX 3090 / 4090  | 24   | ~1,5 à 2 jours           |
 | A100 40 GB       | 40   | ~20 h                     |
@@ -305,10 +307,11 @@ Exposant de queue α estimé par `powerlaw.Fit` sur les 5 % de |r_t| les plus gr
 
 Benchmark S&P 500 réel : **α ≈ 4,35**.
 
-| SDE \ Schedule   | Linéaire | Exponentiel       | Cosinus           |
-| ---------------- | --------- | ----------------- | ----------------- |
-| **VE**     | 8,96      | 8,49              | 4,14              |
-| **MBG** ⭐ | 3,06      | **4,62** ✨ | **3,78** ✨ |
+
+| SDE \ Schedule | Linéaire | Exponentiel | Cosinus     |
+| ---------------- | ----------- | ------------- | ------------- |
+| **VE**         | 8,96      | 8,49        | 4,14        |
+| **MBG** ⭐     | 3,06      | **4,62** ✨ | **3,78** ✨ |
 
 Les configurations **MBG + exponentiel** et **MBG + cosinus** se rapprochent le plus de l'empirique (α ≈ 4,35). Une tolérance de ± 20 % est acceptable en raison des différences de seed et de période de téléchargement.
 
@@ -320,10 +323,11 @@ En plus de la reproduction S&P 500, le dépôt propose un **second flux indépen
 
 ### Vue d'ensemble des flux parallèles
 
-| Univers                      | Config CPU         | Config GPU (papier)  | Script CPU             | Script GPU (3×3)          |
-| ---------------------------- | ------------------ | -------------------- | ---------------------- | -------------------------- |
-| **S&P 500** (original) | `cpu_small.yaml` | `paper.yaml`       | `reproduce_cpu.sh`   | `reproduce_all.sh`       |
-| **CAC 40** (ajouté)   | `cpu_cac40.yaml` | `paper_cac40.yaml` | `reproduce_cac40.sh` | `reproduce_cac40_all.sh` |
+
+| Univers                | Config CPU       | Config GPU (papier) | Script CPU           | Script GPU (3×3)        |
+| ------------------------ | ------------------ | --------------------- | ---------------------- | -------------------------- |
+| **S&P 500** (original) | `cpu_small.yaml` | `paper.yaml`        | `reproduce_cpu.sh`   | `reproduce_all.sh`       |
+| **CAC 40** (ajouté)   | `cpu_cac40.yaml` | `paper_cac40.yaml`  | `reproduce_cac40.sh` | `reproduce_cac40_all.sh` |
 
 Les deux flux peuvent s'exécuter côte à côte : **checkpoints, samples, fenêtres prétraitées et figures sont namespacés** par univers (`cac40_*` vs. `sp500_*`) et ne se recouvrent jamais.
 
@@ -374,8 +378,9 @@ Artefacts produits :
 
 ### Coexistence des deux flux
 
-| Artefact            | S&P 500                                | CAC 40                                      |
-| ------------------- | -------------------------------------- | ------------------------------------------- |
+
+| Artefact            | S&P 500                              | CAC 40                                    |
+| --------------------- | -------------------------------------- | ------------------------------------------- |
 | Données brutes     | `data/raw/sp500.parquet`             | `data/raw/cac40.parquet`                  |
 | Fenêtres           | `data/processed/sp500_L*.npz`        | `data/processed/cac40_L*.npz`             |
 | Checkpoints         | `experiments/checkpoints/sp500_*.pt` | `experiments/checkpoints/cac40_*.pt`      |
@@ -427,18 +432,20 @@ python scripts/train.py --config configs/default.yaml --sde cev
 
 Cinq fichiers YAML sont fournis dans `configs/` :
 
-| Fichier              | Univers    | Usage                                                                        |
-| -------------------- | ---------- | ---------------------------------------------------------------------------- |
+
+| Fichier            | Univers    | Usage                                                                  |
+| -------------------- | ------------ | ------------------------------------------------------------------------ |
 | `paper.yaml`       | S&P 500    | Hyperparamètres verrouillés sur le papier (§4).**Ne pas modifier.** |
-| `cpu_small.yaml`   | S&P 500    | Version CPU réduite ~10× (L=256, 2 blocs, 300 epochs)                      |
-| `paper_cac40.yaml` | CAC 40     | Miroir paper-scale adapté au CAC 40 (`min_years=25`)                      |
-| `cpu_cac40.yaml`   | CAC 40     | Version CPU réduite ~10× sur 20 blue-chips français                       |
-| `default.yaml`     | (flexible) | Configuration pour les extensions                                            |
+| `cpu_small.yaml`   | S&P 500    | Version CPU réduite ~10× (L=256, 2 blocs, 300 epochs)                |
+| `paper_cac40.yaml` | CAC 40     | Miroir paper-scale adapté au CAC 40 (`min_years=25`)                  |
+| `cpu_cac40.yaml`   | CAC 40     | Version CPU réduite ~10× sur 20 blue-chips français                 |
+| `default.yaml`     | (flexible) | Configuration pour les extensions                                      |
 
 ### Hyperparamètres du papier (§4)
 
+
 | Paramètre                         | Valeur          |
-| ---------------------------------- | --------------- |
+| ------------------------------------ | ----------------- |
 | Longueur de séquence L            | 2048            |
 | Pas de la fenêtre glissante       | 400             |
 | σ_min, σ_max                     | 0,01, 1,0       |
@@ -464,6 +471,7 @@ Trois faits stylisés sont calculés par `src/stylized_facts.py` :
 
    $$
    L(k) = \frac{\mathbb{E}[r_t\, r_{t+k}^2 - r_t\, |r_t|^2]}{\mathbb{E}[|r_t|^2]^2}
+
    $$
 
    pour k = 0…100 (valeurs négatives persistantes attendues).
@@ -480,6 +488,7 @@ Le script `scripts/evaluate.py` produit un tableau comparatif α (nôtre vs papi
 4. **Mémoire GPU** : L=2048, batch=64, 128 canaux ≈ 4 GB VRAM. Réduire le batch à 32 en cas d'OOM.
 5. **Temps d'échantillonnage** : N=2000 × 120 échantillons × L=2048 → 10 à 30 min par modèle selon le GPU.
 6. **Pollution du cache `data/raw/<universe>.parquet`** : le nom du fichier cache dépend uniquement de `universe`, pas de la liste de tickers. Si vous lancez d'abord `reproduce_cpu.sh` (qui hard-code 20 tickers) puis `reproduce_all.sh` (liste S&P 500 complète), le second **réutilise le cache à 20 tickers** et entraîne donc sur un dataset 20× plus petit que le papier (symptôme observé : `sp500: (420, 2048) windows` et α synthétiques 1,5 à 3,5 trop hauts). Même piège pour le CAC 40. **Solution** avant de basculer d'un sous-ensemble hard-codé à une liste complète :
+
    ```bash
    rm -f data/raw/<universe>.parquet data/processed/<universe>_L*.npz
    ```
@@ -493,9 +502,9 @@ Le script `scripts/evaluate.py` produit un tableau comparatif α (nôtre vs papi
 
 Projet réalisé en trinôme dans le cadre du cursus ENSAE.
 
-- Khac-Vinh **TANG**
-- Linh-Chi **VU** 
-- Botheinetou **Ebetty**
+- Vinh **TANG** - **Chef d'équipe** - ENSAE
+- Linh-Chi **VU** - ENSAE
+- Botheinetou **Ebetty** - École Polytechnique
 
 ---
 
